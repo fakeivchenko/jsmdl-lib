@@ -4,6 +4,7 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.util.Lists;
 import com.ivchenko.jsmdl.servicehandler.ServiceHandler;
+import com.ivchenko.jsmdl.servicehandler.TikTokServiceHandler;
 import com.ivchenko.jsmdl.servicehandler.TwitterServiceHandler;
 import lombok.Getter;
 import lombok.NonNull;
@@ -46,6 +47,7 @@ public class JsmdlConfig {
                 Lists.newArrayList()
         );
         instance.addServiceHandler(new TwitterServiceHandler(instance.requestFactory));
+        instance.addServiceHandler(new TikTokServiceHandler(instance.requestFactory));
         return instance;
     }
 }
