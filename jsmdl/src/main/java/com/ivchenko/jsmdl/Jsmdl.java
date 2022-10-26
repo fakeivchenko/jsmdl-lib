@@ -21,10 +21,13 @@ import com.ivchenko.jsmdl.request.VideoRequest;
 import com.ivchenko.jsmdl.response.VideoResponse;
 import com.ivchenko.jsmdl.servicehandler.ServiceHandler;
 import com.ivchenko.jsmdl.video.Video;
+import com.ivchenko.jsmdl.video.downloader.BasicVideoDownloader;
+import com.ivchenko.jsmdl.video.downloader.VideoDownloader;
 import lombok.Getter;
 import lombok.NonNull;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -52,17 +55,28 @@ public class Jsmdl {
     }
 
     public void downloadVideoToFile(Video video, File file) {
-        String host = new GenericUrl(video.getOriginalUrl()).getHost();
-
-        Optional<ServiceHandler<?>> serviceHandlerOptional = config.getServiceHandlers().stream().filter(
-                sh -> sh.getVideoDownloader().accepts().equals(video.getClass())
-        ).findAny();
-
-        if (serviceHandlerOptional.isEmpty()) throw new RuntimeException(); // TODO: 10/21/22 Replace
-        else serviceHandlerOptional.get().getVideoDownloader().downloadToFile(video, file);
+        VideoDownloader videoDownloader = getDownloaderForVideo(video);
+        videoDownloader.downloadToFile(video, file);
     }
 
     public void downloadVideoToFile(Video video, String file) {
         downloadVideoToFile(video, new File(file));
+    }
+
+    public InputStream getVideoInputStream(Video video) {
+        VideoDownloader videoDownloader = getDownloaderForVideo(video);
+        return videoDownloader.getInputStream(video);
+    }
+
+    private VideoDownloader getDownloaderForVideo(Video video) {
+        Optional<ServiceHandler<?>> serviceHandlerOptional = config.getServiceHandlers().stream().filter(
+                sh -> sh.getVideoDownloader().accepts().equals(video.getClass())
+        ).findAny();
+
+        // If ServiceHandler present return it's VideoDownloader, otherwise return BasicVideoDownloader
+        if (serviceHandlerOptional.isPresent())
+            return serviceHandlerOptional.get().getVideoDownloader();
+        else
+            return new BasicVideoDownloader(config.getRequestFactory());
     }
 }
